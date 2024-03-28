@@ -1,0 +1,74 @@
+﻿@page "/AddWin"
+
+@inject HttpClient Http
+@inject NavigationManager NavigationManager
+@using BlazorIntus2.Shared.DataModel
+@using BlazorIntus2.Client.Components
+
+<h3>Add new window</h3>
+@answHttp
+<EditForm Model=@win OnValidSubmit="SaveWin">
+    <DataAnnotationsValidator />
+    <div class="mb-3">
+        <label for="Name" class="form-label">Name</label>
+        <div class="col-md-4">
+            <InputText class="form-control" @bind-Value="win.Name" />
+        </div>
+        <ValidationMessage For="@(() => win.Name)" />
+    </div>
+
+    <div class="mb-3">
+        <label for="Name" class="form-label">QuantityOfWindows</label>
+        <div class="col-md-4">
+            <InputNumber min="1" class="form-control" ParsingErrorMessage="number out of range" @bind-Value="win.QuantityOfWindows" />
+        </div>
+        <ValidationMessage For="@(() => win.QuantityOfWindows)" />
+    </div>
+    <div class="form-group">
+        <button disabled=@isDisabled type ="submit" class="btn btn-primary">@ButText</button>
+    </div>
+</EditForm>
+
+<ModalDialog @ref="@ModalDialog" Title="Info">
+    <div class="row">
+        @* <hr>
+        <p>Window ADD</p> *@
+
+        <button class="btn btn-primary" @onclick="() => ModalDialog?.Close() ">Close</button>
+    </div>
+</ModalDialog>
+
+
+@code {
+    private ModalDialog? ModalDialog { get; set; }
+    private bool isDisabled;
+    private Data.Window win = new();
+    //private MarkupString answHttp = new("RESULT OPERATION:");
+    private MarkupString answHttp = new("");
+    string ButText = "Add";
+
+    // private readonly DataContext db;
+
+    protected async Task SaveWin()
+    {
+        isDisabled = true;
+        ButText = "Wait...";
+
+        await Task.Delay(TimeSpan.FromSeconds(1));
+
+        var result = await Http.PostAsJsonAsync("api/Window", win);
+        if (result.StatusCode.ToString() != "OK")
+        {
+            answHttp = new("<div style=color:RED; border: 1px dashed currentcolor;>RESULT OPERATION:ERROR</div>");
+        }
+        else
+        {
+            ModalDialog?.Open("Window Add - ok");
+            answHttp = new("<div style=color:blue; border: 1px dashed currentcolor;>RESULT OPERATION:OK</div>");
+            win.Name = "";
+            win.QuantityOfWindows = 0;
+            isDisabled = false;            
+        }
+        ButText = "Add";
+    }     
+}
