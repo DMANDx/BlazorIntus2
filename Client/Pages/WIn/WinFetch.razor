@@ -1,0 +1,75 @@
+﻿@page "/WinFetch"
+@inject HttpClient Http
+@inject NavigationManager NavigationManager
+@inject ILogger<WinFetch> Logger
+
+@using BlazorIntus2.Shared.DataModel
+
+<h3>WinFetch</h3>
+
+<br />
+@if (winList == null || winList.Count == 0)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <table class="table table-striped align-middle table-bordered">
+        <thead class="table-success">
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                @* <th>State</th> *@
+                <th>Edit</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var w in winList)
+            {
+                <tr>
+                    <td>@w.Id</td>
+                    <td>@w.Name</td>
+                    <td>
+                        <a href='/Win/Edit/@w.Id' class="btn btn-outline-dark" role="button">
+                            Edit
+                        </a>
+                        <a href='/Win/delete/@w.Id' class="btn btn-outline-danger" role="button">
+                            Delete
+                        </a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+
+    </table>
+}
+@code 
+{
+    protected List<Data.Window> winList = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        Logger.LogInformation("MyComponent initialized.");
+        await GetWin();        
+    }
+
+    protected async Task GetWin()
+    {
+        try
+        {
+
+            winList = await Http.GetFromJsonAsync<List<Data.Window>>("api/Window/ListW");
+            //winList = await Http.GetFromJsonAsync<List<Data.Window>>("api/Window");            
+        }
+        catch (Exception ex)
+        {
+            // Обработка ошибки
+            Console.WriteLine($"Ошибка при получении данных: {ex.Message}");
+        }
+        finally
+        {
+            
+        }
+
+    }
+}
