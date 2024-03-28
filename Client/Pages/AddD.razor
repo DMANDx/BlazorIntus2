@@ -1,0 +1,181 @@
+﻿@page "/orders/addD/{Id:int}"
+@using BlazorIntus2.Shared.DataModel
+@using static BlazorIntus2.Shared.DataModel.Data
+@using BlazorIntus2.Client.Components
+@using System.Net
+
+@inject HttpClient Http
+@inject NavigationManager NavigationManager
+
+@* <EditForm Model="@orderWindow" OnValidSubmit="SaveOrder"> *@
+<EditForm Model="@orderWindow" OnValidSubmit="SaveOrder2">
+    <Alert Color="Color.Success" Visible>
+        <AlertMessage>Add subelements to next order</AlertMessage>
+        <Div>NameOrder- @(ord.Name ?? "undef") || OrderState - @ord.State</Div>        
+    </Alert>
+    <br />
+    <hr />
+    <label class="form-label">Select wondows</label>
+    <br />
+
+    @if (windows != null)
+    {
+        @foreach (var window in windows)
+        {            
+            <InputCheckbox @bind-Value="window.Selected" @bind-Value:after="() => OnWindowSelected(window)" /> <label>- @window.Name;</label>
+
+            <br />
+        }
+    }
+
+    <hr />
+    <div class="form-group">        
+        <Button Color="Color.Primary" Type="ButtonType.Submit" Loading="@isLoading" Disabled=@isDisabled Clicked="@ShowLoading">Submit</Button>
+    </div>
+</EditForm>
+
+<ModalDialog @ref="@ModalDialog" Title="Info">
+    <div class="row">
+        @* <hr>
+        <p>Window ADD</p> *@
+        <button class="btn btn-primary" @onclick="() => ModalDialog?.Close()">Close</button>
+    </div>
+</ModalDialog>
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+    private ModalDialog? ModalDialog { get; set; }
+    private List<Data.Window>? windows = new();
+    private Data.Order? ord = new();
+    private OrderWindow orderWindow = new();
+
+    private List<Window> selectedWindows = new List<Window>();
+
+    private void OnWindowSelected(Window window)
+    {
+        if (window.Selected)
+        {
+            selectedWindows.Add(window);
+        }
+        else
+        {
+            selectedWindows.Remove(window);
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        ord = await Http.GetFromJsonAsync<Data.Order>($"api/Data/GetOrd/{Id}");
+        windows = await Http.GetFromJsonAsync<List<Data.Window>>("api/Window/ListW");
+
+        var savedOrderWindows = await Http.GetFromJsonAsync<List<OrderWindow>>($"api/Data/GetOrderWindows/{Id}");
+
+        // Установите свойство Selected для каждого окна, которое было сохранено
+        foreach (var savedOrderWindow in savedOrderWindows)
+        {
+            var window = windows.First(w => w.Id == savedOrderWindow.WindowId);
+            window.Selected = true;
+        }
+
+    }
+
+    protected async Task SaveOrder()
+    {
+        if (ord.Id != 0)
+        {
+            foreach (var window in windows)
+            {
+                var existingOrderWindowResponse = await Http.GetAsync($"api/Data/GetOrderWindow/{ord.Id}/{window.Id}");
+
+                if (existingOrderWindowResponse.StatusCode == HttpStatusCode.OK)
+                {
+                    if (window.Selected)
+                    {
+                        // Если окно уже существует и выбрано, мы ничего не делаем.
+                    }
+                    else
+                    {
+                        // Если окно уже существует, но не выбрано, мы удаляем его.
+                        await Http.DeleteAsync($"api/Data/AddOrdElDexExistWin/{ord.Id}/{window.Id}");
+                    }
+                }
+                else if (existingOrderWindowResponse.StatusCode == HttpStatusCode.NoContent)
+                {
+                    if (window.Selected)
+                    {
+                        // Если окно не существует, но выбрано, мы добавляем его.
+                        var orderWindow = new OrderWindow
+                            {
+                                OrderId = ord.Id,
+                                WindowId = window.Id
+                            };
+                        await Http.PostAsJsonAsync("api/Data/AddOrdEl", orderWindow);
+                    }
+                    else
+                    {
+                        // Если окно не существует и не выбрано, мы ничего не делаем.
+                    }
+                }
+            }
+        }
+
+        ModalDialog?.Open("All data save- ok");
+        System.Threading.Thread.Sleep(1000);
+        NavigationManager.NavigateTo("/OrderDetails");
+    }
+
+
+
+    protected async Task SaveOrder2()
+    {
+        if (ord.Id != 0)
+        {
+            //var allWindows = await Http.GetFromJsonAsync<List<Window>>("api/Data/GetAllWindows");
+
+            var selectedWindows = new List<OrderWindow>();
+            var deselectedWindows = new List<OrderWindow>();
+
+            foreach (var window in windows)
+            {
+                var orderWindow = new OrderWindow
+                    {
+                        OrderId = ord.Id,
+                        WindowId = window.Id
+                    };
+
+                if (window.Selected)
+                {
+                    selectedWindows.Add(orderWindow);
+                }
+                else
+                {
+                    deselectedWindows.Add(orderWindow);
+                }
+            }
+
+            await Http.PostAsJsonAsync("api/Data/UpdateOrderWindows", new { SelectedWindows = selectedWindows, DeselectedWindows = deselectedWindows });
+        }
+    }
+
+}
+
+@* //Button *@
+@code {
+    private bool isLoading;
+    private bool isDisabled;
+
+
+    private async Task ShowLoading()
+    {
+        isLoading = true;
+        isDisabled = true;
+
+        //await Task.Delay(TimeSpan.FromSeconds(3));
+        //await SaveOrder();
+        await SaveOrder2();
+
+        isLoading = false;
+        isDisabled = false;
+    }
+}
