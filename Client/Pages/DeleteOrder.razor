@@ -1,0 +1,50 @@
+﻿<h3>DeleteOrder</h3>
+
+@page "/order/delete/{Id:int}"
+@using BlazorIntus2.Shared.DataModel
+@inject HttpClient Http
+@inject NavigationManager NavigationManager
+
+<br />
+<div class="form-group">
+    <h4>Do you want to delete this order?</h4>
+    <table class="table">
+        <tbody>
+            <tr>
+                <td>Name</td>
+                <td>@order.Name</td>
+            </tr>
+            <tr>
+                <td>Address</td>
+                <td>@order.State</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+<div class="form-group">
+    <input type="submit" value="Delete" @onclick="(async () => await RemoveOrder(order.Id))" class="btn btn-danger" />
+    <input type="submit" value="Cancel" @onclick="(() => Cancel())" class="btn btn-warning" />
+</div>
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+    Data.Order order = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (order != null)
+        {
+            order = await Http.GetFromJsonAsync<Data.Order>("/api/Data/" + Convert.ToInt32(Id));
+        }        
+    }
+    protected async Task RemoveOrder(int Id)
+    {
+        await Http.DeleteAsync("api/Data/" + Id);
+        NavigationManager.NavigateTo("/OrderDetails");
+    }
+    void Cancel()
+    {
+        NavigationManager.NavigateTo("/OrderDetails");
+    }
+}
