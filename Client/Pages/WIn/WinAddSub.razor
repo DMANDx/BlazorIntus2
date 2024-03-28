@@ -1,0 +1,226 @@
+﻿@page "/WinAddSub"
+@inject HttpClient Http
+@inject NavigationManager NavigationManager
+@using BlazorIntus2.Client.Components
+@using BlazorIntus2.Shared.DataModel
+
+<h3>WinAddSub</h3>
+
+@* <InputSelect @bind-Value="@filterItem" @oninput="LoadSub" class="form-control">
+    @if (wlist != null)
+    {
+        <option value="">select...</option>
+        @foreach (var stock in wlist)
+        {
+            <option value="@stock.Id">@stock.Name</option>
+        }
+    }
+</InputSelect> *@
+
+
+@* <InputSelect @bind-Value="@filterItem" @bind-Value:after="OnFilterItemChanged2" class="form-control">
+    @if (wlist != null)
+    {
+        <option value="">select...</option>
+        @foreach (var stock in wlist)
+        {
+            <option value="@stock.Id">@stock.Name</option>
+        }
+    }
+</InputSelect> *@
+
+
+<InputSelect @bind-Value="@filterItem" @bind-Value:after="LoadSub" class="form-control" id="id">
+    @if (wlist != null) 
+    {
+        <option value="">--Select--</option>
+        @foreach (var w in wlist)
+        {
+            <option value="@w.Id">@w.Name</option>
+        }
+    }    
+</InputSelect>
+
+<br />
+
+@if (YN == true)
+{    
+    <p><em>Loading...</em></p>
+}
+
+<div class="card">
+    <div class="card-body">
+        <div class="mt-3">
+            <h2>Filtered List of SubElemnts at window</h2>
+            @foreach (var item in subs)
+            {
+                <div>Element-[@item.Element] : Type-[@item.Type] : [Height-@item.Height]- [Width-@item.Width]</div>                
+                //<button @onclick="() => {SendRequest(item.Id); }">Отправить запрос</button>
+                <button @onclick="async () => { await Del(item.Id); }">DelSub</button>
+                //<input hidden type="number" @bind="item.Id" />
+            }
+        </div>
+    </div>
+</div>
+
+<br />
+<hr />
+
+<h2>Add new subselements</h2>
+<EditForm Model=@se OnValidSubmit="SaveWinSub">
+    <DataAnnotationsValidator />
+    <div class="mb-3">
+        <label for="Name" class="form-label">Type</label>
+        <div class="col-md-4">
+            <InputText class="form-control" @bind-Value="se.Type" />
+        </div>
+        <ValidationMessage For="@(() => se.Width)" />
+    </div>
+
+    <div class="mb-3">
+        <label for="Name" class="form-label">Width</label>
+        <div class="col-md-4">
+            <InputNumber min="1" class="form-control" @bind-Value="se.Width" />
+        </div>
+        <ValidationMessage For="@(() => se.Width)" />
+    </div>
+
+    <div class="mb-3">
+        <label for="Name" class="form-label">Element</label>
+        <div class="col-md-4">
+            <InputNumber min="1" class="form-control" @bind-Value="se.Element" />
+        </div>
+        <ValidationMessage For="@(() => se.Element)" />
+    </div>
+
+    <div class="mb-3">
+        <label for="Name" class="form-label">Height</label>
+        <div class="col-md-4">
+            <InputNumber min="1" class="form-control" @bind-Value="se.Height" />
+        </div>
+        <ValidationMessage For="@(() => se.Height)" />
+    </div>
+    
+    <hr />
+
+    <div class="form-group">
+        <button type="submit" class="btn btn-primary">Add</button>
+    </div>
+
+    @answHttp
+</EditForm>
+
+@* <button class="btn btn-primary" @onclick="() => ModalDialog.Open()">Click me!</button> *@
+
+<ModalDialog @ref="@ModalDialog" Title="Hello World">
+    <div class="row">
+        <h3>Lorem Ipsum</h3>
+        <hr>
+        <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc vel ultricies sapien. Duis nec nunc erat. Vivamus eget sem tristique, lacinia mi id, cursus eros.</p>
+        <button class="btn btn-primary"  @onclick="() => ModalDialog.Close()">Close</button>
+    </div>
+</ModalDialog>
+
+
+@code {
+    private ModalDialog ModalDialog { get; set; }
+    protected bool YN = false;
+    private List<Data.Window> wlist = new();
+    private Data.SubElement se = new();
+    int? filterItem;
+    private MarkupString answHttp = new("RESULT OPERATION:");
+
+
+    //new
+    // private int id;
+    private string responseMessage = "";
+    private bool isLoading;
+
+
+    //private IEnumerable<Data.SubElement> subs = Enumerable.Empty<Data.SubElement>();
+    protected List<Data.SubElement> subs = new List<Data.SubElement>();
+
+    protected override async Task OnInitializedAsync()
+    {        
+        wlist = await Http.GetFromJsonAsync<List<Data.Window>>("api/Window/ListW");
+    }    
+
+    private async Task LoadSub()
+    {
+        //subs = await Http.GetFromJsonAsync<List<Data.SubElement>>("api/Window/ListW/@{filterItem}");
+
+        YN = true;
+
+        //if (filterItem == 0 || filterItem == null || filterItem <= 0)
+        if (filterItem == 0 || filterItem == null)
+        {          
+            YN = false;
+            subs.Clear();
+            return;
+        }        
+
+        subs = await Http.GetFromJsonAsync<List<Data.SubElement>>("api/Window/ListSubs/?id=" + filterItem);
+        //System.Threading.Thread.Sleep(5000);
+        YN = false;
+    }   
+
+    private async Task SaveWinSub()
+    {
+
+        if (filterItem == 0 || filterItem == null)
+        {
+            answHttp = new("<div style=color:red; border: 1px dashed currentcolor;>RESULT OPERATION:ERROR - SELECT WINDOW </div>");
+            return;
+        }
+
+        YN = true;
+
+        se.WindowId = (int)filterItem;
+        var result = await Http.PostAsJsonAsync("api/Window/AddSubEl", se);
+
+        if (result.IsSuccessStatusCode)
+        {            
+            var ans = await result.Content.ReadFromJsonAsync<Data.SubElement>();
+            answHttp = new("<div style=color:green; border: 1px dashed currentcolor;>RESULT OPERATION:Element " + ans.Type.ToString() + " Add ok </div>");
+            se.Width = 0;
+            se.Element = 0;
+            se.Window = null;
+            se.Height = 0;
+            se.WindowId = 0;
+            se.Type = null;
+            filterItem = null;
+            subs.Clear();
+        }
+        else
+        {
+            // Обработка ошибки
+            var error = await result.Content.ReadAsStringAsync();
+            answHttp = new("<div style=color:red; border: 1px dashed currentcolor;>ERROR " + error.ToString() + " Add ok </div>");
+        }
+        YN = false;
+    }
+
+    private async Task Del(int id)
+    {
+        isLoading = true;
+
+        try
+        {   
+            string url = $"/api/Window/DelSubEl/{id}";
+            //var response = await Http.DeleteAsync("api/Window/" + id);
+            var response = await Http.DeleteAsync(url);
+            response.EnsureSuccessStatusCode();
+            responseMessage = await response.Content.ReadAsStringAsync();
+            answHttp = new("<div style=color:green; border: 1px dashed currentcolor;>RESULT OPERATION:Element " + responseMessage.ToString() + "WAS DELETE-OK</div>");
+        }
+        catch (HttpRequestException e)
+        {
+            responseMessage = "Ошибка запроса: " + e.Message;
+        }
+        finally
+        {
+            await LoadSub();
+            isLoading = false;
+        }
+    }
+}
