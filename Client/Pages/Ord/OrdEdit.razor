@@ -1,0 +1,89 @@
+﻿<h3>OrdEdit</h3>
+
+@page "/order/edit/{Id:int}"
+
+@using BlazorIntus2.Shared.DataModel
+@inject ILogger<Data.Order> Logger
+@inject HttpClient Http
+@inject NavigationManager NavigationManager
+
+DATA-@ord.Name
+
+<br />
+@answHttp
+
+<EditForm Model=@ord OnValidSubmit="SaveOrd">
+    <DataAnnotationsValidator />
+    <div class="mb-3">
+        <label for="Name" class="form-label">Name</label>
+        <div class="col-md-4">
+            <InputText class="form-control" @bind-Value="ord.Name" />
+        </div>
+        <ValidationMessage For="@(() => ord.Name)" />
+    </div>
+    
+    <div class="mb-3">
+        <label for="Name" class="form-label">State</label>
+        <div class="col-md-4">
+            <InputText class="form-control" @bind-Value="ord.State" />
+        </div>
+        <ValidationMessage For="@(() => ord.State)" />
+    </div>    
+
+    <div class="form-group">
+        <button type="submit" class="btn btn-primary">Save</button>
+        <input type="submit" value="Cancel" @onclick="(() => Cancel())" class="btn btn-warning" />
+    </div>
+
+</EditForm>
+@code {
+    [Parameter]
+    public int Id { get; set; }
+    Data.Order ord = new();
+    
+    private MarkupString answHttp = new("RESULT OPERATION:");
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            ord = await Http.GetFromJsonAsync<Data.Order>("api/Data/" + Id);
+            answHttp = new(ord.Name);
+
+        }
+        catch (HttpRequestException ex)
+        {
+            answHttp = new(ex.Message.ToString());
+        }
+        catch (Exception ex)
+        {
+            answHttp = new(ex.Message.ToString());
+        }
+        finally
+        {
+            Logger.LogInformation(ord.Name);
+        }
+
+    }
+
+
+    protected async Task SaveOrd()
+    {
+        var result = await Http.PutAsJsonAsync("api/Data", ord);
+        if (result.StatusCode.ToString() != "OK")
+        {
+            answHttp = new("<div style=color:RED; border: 1px dashed currentcolor;>RESULT OPERATION:ERROR</div>");
+        }
+        else
+        {
+            answHttp = new("<div style=color:blue; border: 1px dashed currentcolor;>RESULT OPERATION:OK</div>");            
+            NavigationManager.NavigateTo("/OrderDetails");
+        }
+    }
+
+    void Cancel()
+    {
+        NavigationManager.NavigateTo("/OrderDetails");
+    }
+}
