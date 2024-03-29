@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore.ChangeTracking;
 using BlazorIntus2.Shared;
 using System;
 using BlazorIntus2.Shared.DataModel;
@@ -9,8 +8,6 @@ using System.Collections.Generic;
 using System.Linq;
 using BlazorIntus2.Server.Interfaces;
 using static BlazorIntus2.Shared.DataModel.Data;
-using Blazorise;
-
 
 namespace BlazorIntus2.Server.Controllers
 {
@@ -172,9 +169,11 @@ public static class ObjExt
 {
     public static OrderWindow Clone(this OrderWindow myObj)
     {
-        var myObjClone = new OrderWindow();
-        myObjClone.Id = myObj.Id;
-        myObjClone.OrderId = myObj.OrderId;
+        var myObjClone = new OrderWindow
+        {
+            Id = myObj.Id,
+            OrderId = myObj.OrderId
+        };
         //
         return myObjClone;
     }
