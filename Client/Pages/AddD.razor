@@ -8,7 +8,7 @@
 @inject NavigationManager NavigationManager
 
 @* <EditForm Model="@orderWindow" OnValidSubmit="SaveOrder"> *@
-<EditForm Model="@orderWindow" OnValidSubmit="SaveOrder2">
+<EditForm Model="@orderWindow">
     <Alert Color="Color.Success" Visible>
         <AlertMessage>Add subelements to next order</AlertMessage>
         <Div>NameOrder- @(ord.Name ?? "undef") || OrderState - @ord.State</Div>        
@@ -77,7 +77,6 @@
             var window = windows.First(w => w.Id == savedOrderWindow.WindowId);
             window.Selected = true;
         }
-
     }
 
     protected async Task SaveOrder()
@@ -125,8 +124,6 @@
         NavigationManager.NavigateTo("/OrderDetails");
     }
 
-
-
     protected async Task SaveOrder2()
     {
         if (ord.Id != 0)
@@ -156,6 +153,9 @@
 
             await Http.PostAsJsonAsync("api/Data/UpdateOrderWindows", new { SelectedWindows = selectedWindows, DeselectedWindows = deselectedWindows });
         }
+
+        System.Threading.Thread.Sleep(1000);
+        NavigationManager.NavigateTo("/OrderDetails");
     }
 
 }
@@ -165,15 +165,18 @@
     private bool isLoading;
     private bool isDisabled;
 
-
     private async Task ShowLoading()
     {
         isLoading = true;
         isDisabled = true;
 
         //await Task.Delay(TimeSpan.FromSeconds(3));
-        await SaveOrder();
-        //await SaveOrder2();
+        
+        //with many requests
+        //await SaveOrder();
+        
+        //with list
+        await SaveOrder2();
 
         isLoading = false;
         isDisabled = false;
