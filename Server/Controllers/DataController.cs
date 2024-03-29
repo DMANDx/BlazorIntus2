@@ -53,9 +53,9 @@ namespace BlazorIntus2.Server.Controllers
         }
 
         [Route("/api/Data/GetOrderWindows/{id}")]
-        public async Task<List<OrderWindow>> GetOrderWindows(int id)
+        public List<OrderWindow> GetOrderWindows(int id)
         {
-            return (List<OrderWindow>)db.OrderWindow.Where(z => z.OrderId == id).ToList();
+            return db.OrderWindow.Where(z => z.OrderId == id).ToList();
         }
 
         [HttpPost]
@@ -78,7 +78,7 @@ namespace BlazorIntus2.Server.Controllers
         [HttpGet("GetOrderWindow/{orderId}/{windowId}")]
         public OrderWindow GetOrderWindow(int orderId, int windowId)
         {
-            return db.OrderWindow.FirstOrDefault(ow => ow.OrderId == orderId && ow.WindowId == windowId);          
+            return db.OrderWindow.FirstOrDefault(ow => ow.OrderId == orderId && ow.WindowId == windowId)!;          
         }
 
         [HttpDelete]
@@ -88,7 +88,7 @@ namespace BlazorIntus2.Server.Controllers
             try
             {
                 var ordw = db.OrderWindow.FirstOrDefault(ow => ow.WindowId == windowId && ow.OrderId == orderId);
-                db.OrderWindow.Remove(ordw);
+                db.OrderWindow.Remove(ordw!);
                 db.SaveChanges();
                 return Ok(ordw);
             }
@@ -103,7 +103,7 @@ namespace BlazorIntus2.Server.Controllers
         [HttpPost("/api/Data/UpdateOrderWindows")]
         public async Task<IActionResult> UpdateOrderWindows([FromBody] UpdateOrderWindowsModel  model)        
         {
-            foreach (var window in model.SelectedWindows)
+            foreach (var window in model.SelectedWindows!)
             {
                 var existingOrderWindow = await db.OrderWindow
                     .FirstOrDefaultAsync(ow => ow.OrderId == window.OrderId && ow.WindowId == window.WindowId);
@@ -114,7 +114,7 @@ namespace BlazorIntus2.Server.Controllers
                 }
             }
 
-            foreach (var window in model.DeselectedWindows)
+            foreach (var window in model.DeselectedWindows!)
             {
                 var existingOrderWindow = await db.OrderWindow
                     .FirstOrDefaultAsync(ow => ow.OrderId == window.OrderId && ow.WindowId == window.WindowId);
