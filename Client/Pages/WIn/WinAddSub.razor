@@ -123,7 +123,8 @@
 
 
 @code {
-    private ModalDialog ModalDialog { get; set; }
+    //private ModalDialog ModalDialog { get; set; }
+    private ModalDialog ModalDialog = new();
     protected bool YN = false;
     private List<Data.Window> wlist = new();
     private Data.SubElement se = new();
@@ -181,7 +182,7 @@
         if (result.IsSuccessStatusCode)
         {            
             var ans = await result.Content.ReadFromJsonAsync<Data.SubElement>();
-            answHttp = new("<div style=color:green; border: 1px dashed currentcolor;>RESULT OPERATION:Element " + ans.Type.ToString() + " Add ok </div>");
+            answHttp = new("<div style=color:green; border: 1px dashed currentcolor;>RESULT OPERATION:Element " + ans!.Type!.ToString() + " Add ok </div>");
             se.Width = 0;
             se.Element = 0;
             se.Window = null;
