@@ -11,7 +11,7 @@
 <EditForm Model="@orderWindow">
     <Alert Color="Color.Success" Visible>
         <AlertMessage>Add subelements to next order</AlertMessage>
-        <Div>NameOrder- @(ord.Name ?? "undef") || OrderState - @ord.State</Div>        
+        <Div>NameOrder- @(ord!.Name ?? "undef") || OrderState - @ord.State</Div>        
     </Alert>
     <br />
     <hr />
@@ -72,18 +72,18 @@
         var savedOrderWindows = await Http.GetFromJsonAsync<List<OrderWindow>>($"api/Data/GetOrderWindows/{Id}");
 
         // Установите свойство Selected для каждого окна, которое было сохранено
-        foreach (var savedOrderWindow in savedOrderWindows)
+        foreach (var savedOrderWindow in savedOrderWindows!)
         {
-            var window = windows.First(w => w.Id == savedOrderWindow.WindowId);
+            var window = windows!.First(w => w.Id == savedOrderWindow.WindowId);
             window.Selected = true;
         }
     }
 
     protected async Task SaveOrder()
     {
-        if (ord.Id != 0)
+        if (ord!.Id != 0)
         {
-            foreach (var window in windows)
+            foreach (var window in windows!)
             {
                 var existingOrderWindowResponse = await Http.GetAsync($"api/Data/GetOrderWindow/{ord.Id}/{window.Id}");
 
@@ -126,14 +126,14 @@
 
     protected async Task SaveOrder2()
     {
-        if (ord.Id != 0)
+        if (ord!.Id != 0)
         {
             //var allWindows = await Http.GetFromJsonAsync<List<Window>>("api/Data/GetAllWindows");
 
             var selectedWindows = new List<OrderWindow>();
             var deselectedWindows = new List<OrderWindow>();
 
-            foreach (var window in windows)
+            foreach (var window in windows!)
             {
                 var orderWindow = new OrderWindow
                     {
