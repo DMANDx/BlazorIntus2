@@ -102,10 +102,9 @@ namespace BlazorIntus2.Server.Controllers
         }
 
 
-        //Test for list
-        [HttpPost]
-        [Route("api/Data/UpdateOrderWindows")]
-        public async Task<IActionResult> UpdateOrderWindows([FromBody] UpdateOrderWindowsModel  model)
+        //Test for list        
+        [HttpPost("/api/Data/UpdateOrderWindows")]
+        public async Task<IActionResult> UpdateOrderWindows([FromBody] UpdateOrderWindowsModel  model)        
         {
             foreach (var window in model.SelectedWindows)
             {
